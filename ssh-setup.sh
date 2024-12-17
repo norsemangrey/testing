@@ -3,10 +3,6 @@
 # Exit on error
 set -e
 
-# Log output to a log file
-LOGFILE="/var/log/ssh-setup.log"
-exec > >(tee -a "$LOGFILE") 2>&1
-
 # Get the username from the $USER environment variable
 USERNAME="$USER"
 
@@ -30,8 +26,8 @@ fi
 
 # Install OpenSSH server if not already installed
 echo "Installing OpenSSH server..."
-sudo apt update
-sudo apt install -y openssh-server
+sudo apt-get update
+sudo apt-get install -y openssh-server
 
 # Check if UFW is active and configure firewall
 if sudo ufw status | grep -q "active"; then

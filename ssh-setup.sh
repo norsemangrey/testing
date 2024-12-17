@@ -3,6 +3,18 @@
 # Exit on error
 set -e
 
+# Get the username from the $USER environment variable
+USERNAME="$USER"
+
+# If the username is "root", ask for confirmation before continuing
+if [ "$USERNAME" == "root" ]; then
+    read -p "You are logged in as root. Are you sure you want to continue? (y/n): " confirmation
+    if [[ ! "$confirmation" =~ ^[Yy]$ ]]; then
+        echo "Exiting setup."
+        exit 1
+    fi
+fi
+
 # Update package list and install OpenSSH if not already installed
 echo "Installing OpenSSH server..."
 sudo apt update
@@ -18,18 +30,6 @@ echo "Configuring firewall to allow SSH..."
 sudo ufw allow ssh
 sudo ufw reload
 
-# Get the username to create or update the authorized_keys file for
-echo "Please enter the username for SSH access:"
-read USERNAME
-
-# Ensure the user exists (create if necessary)
-if ! id "$USERNAME" &>/dev/null; then
-    echo "User '$USERNAME' does not exist. Creating user..."
-    sudo useradd -m "$USERNAME"
-    sudo mkdir -p /home/"$USERNAME"/.ssh
-    sudo chown "$USERNAME":"$USERNAME" /home/"$USERNAME"
-    fi
-
 # Get the IP address of the server
 SERVER_IP=$(hostname -I | awk '{print $1}')
 
@@ -44,11 +44,11 @@ echo "Example: ssh-copy-id $USERNAME@$SERVER_IP"
 echo "Once you've done that, press Enter to continue."
 read -p "Press Enter after copying the public key..."
 
-# Verify if the public key exists in the authorized_keys file
-if ! sudo grep -q "ssh-rsa" /home/"$USERNAME"/.ssh/authorized_keys; then
-    echo "Error: Public key not found in the authorized_keys file."
-    echo "Please try again with 'ssh-copy-id'."
-    exit 1
+# Verify if the public key exists in the authorized_keys file (checking for any SSH key type)
+if ! sudo grep -q "^ssh-" /home/"$USERNAME"/.ssh/authorized_keys; then
+  echo "Error: Public key not found in the authorized_keys file."
+  echo "Please try again with 'ssh-copy-id'."
+  exit 1
 fi
 
 # Set correct permissions for the authorized_keys file

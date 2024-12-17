@@ -3,6 +3,10 @@
 # Exit on error
 set -e
 
+# Log output to a log file
+LOGFILE="/var/log/ssh-setup.log"
+exec > >(tee -a "$LOGFILE") 2>&1
+
 # Get the username from the $USER environment variable
 USERNAME="$USER"
 
@@ -15,20 +19,28 @@ if [ "$USERNAME" == "root" ]; then
     fi
 fi
 
-# Update package list and install OpenSSH if not already installed
+# Check if SSH service is already running
+if ! systemctl is-active --quiet ssh; then
+    echo "Starting and enabling SSH service..."
+    sudo systemctl start ssh
+    sudo systemctl enable ssh
+else
+    echo "SSH service is already running."
+fi
+
+# Install OpenSSH server if not already installed
 echo "Installing OpenSSH server..."
 sudo apt update
 sudo apt install -y openssh-server
 
-# Start and enable SSH service
-echo "Starting and enabling SSH service..."
-sudo systemctl start ssh
-sudo systemctl enable ssh
-
-# Allow SSH traffic through the firewall (if UFW is enabled)
-echo "Configuring firewall to allow SSH..."
-sudo ufw allow ssh
-sudo ufw reload
+# Check if UFW is active and configure firewall
+if sudo ufw status | grep -q "active"; then
+    echo "Configuring firewall to allow SSH..."
+    sudo ufw allow ssh
+    sudo ufw reload
+else
+    echo "UFW is not active. Skipping firewall configuration."
+fi
 
 # Get the IP address of the server
 SERVER_IP=$(hostname -I | awk '{print $1}')
@@ -38,27 +50,42 @@ echo "Setting up SSH key-based authentication for '$USERNAME'..."
 sudo mkdir -p /home/"$USERNAME"/.ssh
 sudo chmod 700 /home/"$USERNAME"/.ssh
 
-# Ask the user to use ssh-copy-id to copy the public key
-echo "Please use the 'ssh-copy-id' command from your client machine to copy your public key to this server."
-echo "Example: ssh-copy-id $USERNAME@$SERVER_IP"
-echo "Once you've done that, press Enter to continue."
-read -p "Press Enter after copying the public key..."
-
-# Verify if the public key exists in the authorized_keys file (checking for any SSH key type)
-if ! sudo grep -q "^ssh-" /home/"$USERNAME"/.ssh/authorized_keys; then
-  echo "Error: Public key not found in the authorized_keys file."
-  echo "Please try again with 'ssh-copy-id'."
-  exit 1
+# Create authorized_keys file if it doesn't exist
+if [ ! -f /home/"$USERNAME"/.ssh/authorized_keys ]; then
+    echo "Creating the authorized_keys file..."
+    sudo touch /home/"$USERNAME"/.ssh/authorized_keys
+    sudo chmod 600 /home/"$USERNAME"/.ssh/authorized_keys
 fi
 
-# Set correct permissions for the authorized_keys file
-sudo chmod 600 /home/"$USERNAME"/.ssh/authorized_keys
-sudo chown -R "$USERNAME":"$USERNAME" /home/"$USERNAME"/.ssh
+# Loop to check and prompt for the public key until it is found in the authorized_keys file
+while true; do
+    echo "Please use the 'ssh-copy-id' command from your client machine to copy your public key to this server."
+    echo "Example: ssh-copy-id $USERNAME@$SERVER_IP"
+    echo "Once you've done that, press Enter to continue."
+    read -p "Press Enter after copying the public key..."
 
-# Modify SSH configuration to disable root login and password authentication
-echo "Configuring SSH to disable root login and password authentication..."
+    if sudo grep -q "^ssh-" /home/"$USERNAME"/.ssh/authorized_keys; then
+        echo "Public key successfully added."
+        break
+    else
+        echo "Error: Public key not found in the authorized_keys file."
+        echo "Please ensure that the public key has been copied correctly."
+        read -p "Press Enter to retry..."
+    fi
+done
+
+# Set correct permissions for the authorized_keys file
+sudo chown -R "$USERNAME":"$USERNAME" /home/"$USERNAME"/.ssh
+sudo chmod 700 /home/"$USERNAME"/.ssh
+sudo chmod 600 /home/"$USERNAME"/.ssh/authorized_keys
+
+# Backup and modify SSH configuration to disable root login and password authentication
+echo "Backing up and configuring SSH to disable root login and password authentication..."
+sudo cp /etc/ssh/sshd_config /etc/ssh/sshd_config.bak
 sudo sed -i 's/^#PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config
 sudo sed -i 's/^#PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config
+sudo sed -i 's/^#ChallengeResponseAuthentication.*/ChallengeResponseAuthentication no/' /etc/ssh/sshd_config
+sudo sed -i 's/^#UsePAM.*/UsePAM no/' /etc/ssh/sshd_config
 
 # Restart SSH service to apply changes
 echo "Restarting SSH service..."
@@ -67,3 +94,5 @@ sudo systemctl restart ssh
 # Print success message
 echo "SSH key-based authentication is now set up for user '$USERNAME'."
 echo "You can now log in using the private key corresponding to the provided public key."
+
+exit 0

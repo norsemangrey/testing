@@ -14,17 +14,7 @@ else
     }
 fi
 
-# Function to handle error from trap
-handleError() {
-
-    logMessage "Failed to set up SSH (${1})" "ERROR"
-    exit 1
-
-}
-
-# Trap errors and pass the error message from the last failed command
-trap 'handleError "$(caller 0)"' ERR
-
+source "./error-handling-function.sh"
 
 # Enable DEBUG messages if needed
 debug=true

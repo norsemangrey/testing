@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Source the logger script
-source ./logging-and-output-functions.sh
+source ./logging-and-output-function.sh
 
 # Enable DEBUG messages if needed
 DEBUG=true

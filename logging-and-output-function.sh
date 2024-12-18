@@ -19,6 +19,7 @@ DEBUG=false
 
 # Helper function to log/write messages
 log_message() {
+
     local message="$1"
     local type="${2^^}" # Convert to uppercase (Bash 4+)
 

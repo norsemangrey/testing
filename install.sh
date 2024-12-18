@@ -3,54 +3,6 @@
 # Exit if any command fails
 set -e
 
-# Check if the system is running under WSL
-is_wsl() {
-    # Check /proc/version for WSL-specific terms
-    if grep -qEi "microsoft.*(subsystem|standard)" /proc/version; then
-        return 0
-    fi
-
-    # Check if the WSL environment variable exists
-    if [ -n "$(grep -i 'Microsoft' /proc/sys/kernel/osrelease 2>/dev/null)" ]; then
-        return 0
-    fi
-
-    return 1
-}
-
-install_firacode_nerd_font() {
-    echo "Installing FiraCode Nerd Font..."
-
-    # Create fonts directory if it doesn't exist
-    FONT_DIR="$HOME/.local/share/fonts"
-    mkdir -p "$FONT_DIR"
-
-    # Download FiraCode Nerd Font
-    FONT_URL="https://github.com/ryanoasis/nerd-fonts/releases/latest/download/FiraCode.zip"
-    FONT_ZIP="/tmp/FiraCode.zip"
-
-    echo "Downloading FiraCode Nerd Font..."
-    wget -qO "$FONT_ZIP" "$FONT_URL"
-
-    if [ $? -ne 0 ]; then
-        echo "Failed to download FiraCode Nerd Font."
-        return 1
-    fi
-
-    # Extract the font into the fonts directory
-    echo "Extracting font files..."
-    unzip -o "$FONT_ZIP" -d "$FONT_DIR"
-
-    # Remove the downloaded zip file
-    rm "$FONT_ZIP"
-
-    # Refresh font cache
-    echo "Refreshing font cache..."
-    fc-cache -f "$FONT_DIR"
-
-    echo "FiraCode Nerd Font installed successfully."
-}
-
 # Check and install Zsh
 if ! command -v zsh &> /dev/null; then
     echo "Installing Zsh..."
@@ -90,16 +42,6 @@ if ! command -v fastfetch &> /dev/null; then
 else
     echo "Fastfetch is already installed."
 fi
-
-# Install Nerd Fonts if not running on WSL
-# if ! is_wsl; then
-#     echo "Installing Nerd Fonts..."
-#     install_firacode_nerd_font()
-# else
-#     echo "This is a WSL environment, skipping Nerd Fonts installation."
-# fi
-
-install_firacode_nerd_font()
 
 # Set Zsh as the default shell if it's not already
 if [[ "$SHELL" != "$(which zsh)" ]]; then

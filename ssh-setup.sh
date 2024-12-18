@@ -3,6 +3,31 @@
 # Exit on error
 set -e
 
+# Define the logger function name in a variable
+externalLogger="./logging-and-output-function.sh"
+
+# Check if logger.sh exists, and source it if it does
+if [[ -f "${externalLogger}" ]]; then
+    source "${externalLogger}"
+else
+    # Fallback minimalistic logger function
+    logMessage() {
+        local level="${2:-INFO}"
+        echo "[$level] $1"
+    }
+fi
+
+
+handleError() {
+
+    logMessage "Failed to set up SSH (${1})" "ERROR"
+    exit 1
+
+}
+
+trap 'handleError "$(caller 0)"' ERR
+
+
 # Get the username from the $USER environment variable
 USERNAME="$USER"
 
@@ -10,18 +35,26 @@ USERNAME="$USER"
 if [ "$USERNAME" == "root" ]; then
     read -p "You are logged in as root. Are you sure you want to continue? (y/n): " confirmation
     if [[ ! "$confirmation" =~ ^[Yy]$ ]]; then
-        echo "Exiting setup."
+        logMessage "Aborted by user. Exiting setup..." "INFO"
         exit 1
     fi
 fi
 
+# Check if OpenSSH server is installed
+if dpkg -l | grep -q openssh-server; then
+    logMessage "OpenSSH server is already installed." "DEBUG"
+else
+    logMessage "Installing OpenSSH server..." "INFO"
+    sudo apt update && sudo apt install -y openssh-server
+fi
+
 # Check if SSH service is already running
 if ! systemctl is-active --quiet ssh; then
-    echo "Starting and enabling SSH service..."
+    logMessage "Starting and enabling SSH service..." "INFO"
     sudo systemctl start ssh
     sudo systemctl enable ssh
 else
-    echo "SSH service is already running."
+    logMessage "SSH service is already running." "DEBUG"
 fi
 
 # Install OpenSSH server if not already installed

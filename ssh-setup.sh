@@ -1,12 +1,10 @@
 #!/bin/bash
 
-# Exit on error
-set -e
-
 # Define the logger function name in a variable
 externalLogger="./logging-and-output-function.sh"
+externalErrorHandler="./error-handling-function.sh"
 
-# Check if logger.sh exists, and source it if it does
+# Check if external logger file, and source it if it does
 if [[ -f "${externalLogger}" ]]; then
     source "${externalLogger}"
 else
@@ -17,15 +15,8 @@ else
     }
 fi
 
-
-handleError() {
-
-    logMessage "Failed to set up SSH (${1})" "ERROR"
-    exit 1
-
-}
-
-trap 'handleError "$(caller 0)"' ERR
+# Source external error handling function (provide general error message)
+source "${externalErrorHandler}" "Failed to set up SSH"
 
 
 # Get the username from the $USER environment variable

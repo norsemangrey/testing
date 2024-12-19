@@ -1,20 +1,25 @@
 #!/bin/bash
 
-# Define the logger function name in a variable
+# Set external logger- and error handling script paths
 externalLogger="./logging-and-output-function.sh"
+externalErrorHandler="./error-handling-function.sh"
 
-# Check if logger.sh exists, and source it if it does
-if [[ -f "${externalLogger}" ]]; then
-    source "${externalLogger}"
-else
+# Source external logger and error handler
+source "${externalLogger}"
+source "${externalErrorHandler}" "Failed to set up SSH"
+
+# Verify if logger function exists and sett fallback
+if [[ $(type -t logMessage) != function ]]; then
+
     # Fallback minimalistic logger function
     logMessage() {
+
         local level="${2:-INFO}"
         echo "[$level] $1"
-    }
-fi
 
-source "./error-handling-function.sh" "Test script failed"
+    }
+
+fi
 
 # Enable DEBUG messages if needed
 debug=true

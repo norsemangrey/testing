@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# Source external logger
-source "./logging-and-output-function.sh"
-
 # Define the error file
 errorFile="/tmp/last-error.txt"
 
@@ -20,6 +17,9 @@ handleError() {
 
     # Capture the error message and remove the script name prefix
     local error=$(cat "${errorFile}" | sed "s|${callingScript}: ||g")
+
+    # Source external logger
+    source "./logging-and-output-function.sh"
 
     # Log the error without the script name prefix
     logMessage "${errorMessage} (${error})" "ERROR"

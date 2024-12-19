@@ -24,7 +24,7 @@ fi
 # Redirect output functions
 execCommand() {
 
-    if $DEBUG; then
+    if $debug; then
 
         "$@"
 

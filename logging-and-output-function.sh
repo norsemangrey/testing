@@ -10,7 +10,7 @@ logFile="${logDirectory}/$(basename "${BASH_SOURCE[1]}" .sh).log"
 mkdir -p "${logDirectory}"
 
 # Enable or disable debug messages
-debug=false
+#debug=false
 
 # Helper function to log/write messages
 logMessage() {

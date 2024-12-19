@@ -21,10 +21,25 @@ if [[ $(type -t logMessage) != function ]]; then
 
 fi
 
+# Redirect output functions
+execCommand() {
+
+    if $DEBUG; then
+
+        "$@"
+
+    else
+
+        "$@" &>/dev/null
+
+    fi
+
+}
+
 # Ensure the system is up-to-date
 logMessage "Updating and upgrading the system..." "INFO"
 
-sudo apt-get update -y && sudo apt-get upgrade -y
+execCommand sudo apt-get update -y && sudo apt-get upgrade -y
 
 logMessage "System update and upgrade completed." "INFO"
 
@@ -56,7 +71,7 @@ if ! command -v zsh &> /dev/null; then
 
 else
 
-    echo "ZSH is already installed." "DEBUG"
+    logMessage "ZSH is already installed." "DEBUG"
 
 fi
 
@@ -162,11 +177,17 @@ sshInstaller="./ssh-setup-and-config.sh"
 # Execute external SSH setup script
 if [[ -x "${sshInstaller}" ]]; then
 
+    logMessage "Set execute permissions on installer script (${sshInstaller})." "DEBUG"
+
+    # Set permissions on the installer script
+    chmod +x "${sshInstaller}"
+
     logMessage "Executing SSH setup script (${sshInstaller})..." "INFO"
 
     # Execute SSH installer
     "${sshInstaller}"
 
+    # Check for errors
     if [[ $? -eq 0 ]]; then
 
         logMessage "SSH setup script executed successfully." "INFO"
@@ -194,7 +215,7 @@ if [[ ! -d "${dotfilesDirectory}" ]]; then
     logMessage "Cloning the .dotfiles repository (${dotfilesRepo})..." "INFO"
 
     # Clone dotfiles directory
-    git clone "${dotfilesRepo}" "${dotfilesDirectory}"
+    execCommand git clone "${dotfilesRepo}" "${dotfilesDirectory}"
 
     # Check for errors
     if [[ $? -ne 0 ]]; then
@@ -210,7 +231,7 @@ else
     logMessage "The .dotfiles repository already exists. Attempting to update..." "DEBUG"
 
     # Pull latest
-    git -C "${dotfilesDirectory}" pull
+    execCommand git -C "${dotfilesDirectory}" pull
 
     # Check for errors
     if [[ $? -ne 0 ]]; then
@@ -226,12 +247,12 @@ fi
 # Ensure the install script is executable
 if [[ -f "${dotfilesInstaller}" ]]; then
 
+    logMessage "Set execute permissions on installer script (${dotfilesInstaller})." "DEBUG"
+
     # Set permissions on the installer script
     chmod +x "${dotfilesInstaller}"
 
-    logMessage "Set execute permissions on installer script (${dotfilesInstaller})." "DEBUG"
-
-    logMessage "Executing .dotfiles installer script..." "INFO"
+    logMessage "Executing .dotfiles installer script (${dotfilesInstaller})..." "INFO"
 
     # Execute the install script
     "${dotfilesInstaller}"
@@ -253,4 +274,4 @@ else
 
 fi
 
-echo "Installer script completed."
+logMessage "Installer script completed."

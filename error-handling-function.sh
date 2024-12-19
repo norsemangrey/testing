@@ -1,11 +1,5 @@
 #!/bin/bash
 
-# Determine the calling script's name and directory
-callingScript="${BASH_SOURCE[1]}"
-
-# Get general error message from caller script
-errorMessage="${1:-Scrip failed}"
-
 # Source external logger
 source "./logging-and-output-function.sh"
 
@@ -18,8 +12,14 @@ exec 2>"${errorFile}"
 # Function to handle error from trap
 handleError() {
 
+    # Determine the calling script's name and directory
+    local callingScript="${BASH_SOURCE[1]}"
+
+    # Get the error message passed from the trap
+    local errorMessage="${0}"
+
     # Capture the error message and remove the script name prefix
-    error=$(cat "${errorFile}" | sed "s|^\./${callingScript}: ||")
+    local error=$(cat "${errorFile}" | sed "s|${callingScript}: ||g")
 
     # Log the error without the script name prefix
     logMessage "${errorMessage} (${error})" "ERROR"
@@ -29,5 +29,6 @@ handleError() {
 
 }
 
-# Trap errors and pass the error message from the last failed command
-trap 'handleError' ERR
+# Trap errors and pass the error from the last failed command
+# Get and pass general error message from caller script or pass default
+trap 'handleError "${1-Script failed}"' ERR

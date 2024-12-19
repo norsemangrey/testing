@@ -26,6 +26,8 @@ execCommand() {
 
     if $debug; then
 
+        logMessage "Debug enabled" "DEBUG"
+
         "$@"
 
     else
@@ -175,7 +177,7 @@ fi
 sshInstaller="./ssh-setup-and-config.sh"
 
 # Execute external SSH setup script
-if [[ -x "${sshInstaller}" ]]; then
+if [[ -f "${sshInstaller}" ]]; then
 
     logMessage "Set execute permissions on installer script (${sshInstaller})." "DEBUG"
 

@@ -1,6 +1,10 @@
+#!/bin/bash
+
 # Determine the calling script's name and directory
 callingScript="${BASH_SOURCE[1]}"
-callingScriptName=$(basename "$callingScript" .sh)
+
+# Get general error message from caller script
+errorMessage="${1:-Scrip failed}"
 
 # Source external logger
 source "./logging-and-output-function.sh"
@@ -14,14 +18,11 @@ exec 2>"${errorFile}"
 # Function to handle error from trap
 handleError() {
 
-    echo "${callingScriptName}"
-    echo $(basename "$0")
-
     # Capture the error message and remove the script name prefix
-    error=$(cat "${errorFile}" | sed "s|^\./${callingScriptName}: ||")
+    error=$(cat "${errorFile}" | sed "s|^\./${callingScript}: ||")
 
     # Log the error without the script name prefix
-    logMessage "Failed to set up SSH (${error})" "ERROR"
+    logMessage "${errorMessage} (${error})" "ERROR"
 
     # Exit the script with a non-zero status
     exit 1

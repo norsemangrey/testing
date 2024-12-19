@@ -14,7 +14,7 @@ else
     }
 fi
 
-source "./error-handling-function.sh"
+source "./error-handling-function.sh" "Test script failed"
 
 # Enable DEBUG messages if needed
 debug=true

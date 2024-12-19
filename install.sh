@@ -1,58 +1,256 @@
 #!/bin/bash
 
-# Exit if any command fails
-set -e
+# Set external logger- and error handling script paths
+externalLogger="./logging-and-output-function.sh"
+externalErrorHandler="./error-handling-function.sh"
 
-# Check and install Zsh
-if ! command -v zsh &> /dev/null; then
-    echo "Installing Zsh..."
-    sudo apt update
-    sudo apt install -y zsh
-    echo "Zsh installed successfully."
+# Source external logger and error handler (but allow execution without them)
+source "${externalErrorHandler}" "Test script failed" || true
+source "${externalLogger}" || true
+
+# Verify if logger function exists or sett fallback
+if [[ $(type -t logMessage) != function ]]; then
+
+    # Fallback minimalistic logger function
+    logMessage() {
+
+        local level="${2:-INFO}"
+        echo "[$level] $1"
+
+    }
+
+fi
+
+# Ensure the system is up-to-date
+logMessage "Updating and upgrading the system..." "INFO"
+
+sudo apt-get update -y && sudo apt-get upgrade -y
+
+logMessage "System update and upgrade completed." "INFO"
+
+# Check and install UFW
+if ! command -v ufw &> /dev/null; then
+
+    logMessage "Installing UFW..." "INFO"
+
+    # Install JQuery
+    sudo apt-get install -y ufw
+
+    logMessage "UFW installed successfully." "INFO"
+
 else
-    echo "Zsh is already installed."
+
+    logMessage "UFW is already installed." "DEBUG"
+
+fi
+
+# Check and install ZSH
+if ! command -v zsh &> /dev/null; then
+
+    logMessage "Installing ZSH..." "INFO"
+
+    # Installing ZSH
+    sudo apt-get install -y zsh
+
+    logMessage "ZSH installed successfully." "INFO"
+
+else
+
+    echo "ZSH is already installed." "DEBUG"
+
 fi
 
 # Check and install Oh-My-Posh
 if ! command -v oh-my-posh &> /dev/null; then
-    echo "Installing Oh-My-Posh..."
+
+    logMessage "Installing Oh-My-Posh..." "INFO"
+
+    # Download Oh-My-Posh
     sudo wget https://github.com/JanDeDobbeleer/oh-my-posh/releases/latest/download/posh-linux-amd64 -O /usr/local/bin/oh-my-posh
+
+    # Set execution permission
     sudo chmod +x /usr/local/bin/oh-my-posh
-    echo "Oh-My-Posh installed successfully."
+
+    logMessage "Oh-My-Posh installed successfully." "INFO"
+
 else
-    echo "Oh-My-Posh is already installed."
+
+    logMessage "Oh-My-Posh is already installed." "DEBUG"
+
+    sudo oh-my-posh upgrade
+
 fi
 
 # Check and install LSDeluxe (lsd)
 if ! command -v lsd &> /dev/null; then
-    echo "Installing LSDeluxe (lsd)..."
-    sudo apt install -y lsd
-    echo "LSDeluxe installed successfully."
+
+    logMessage "Installing LSDeluxe (lsd)..." "INFO"
+
+    # Install LSDelux
+    sudo apt-get install -y lsd
+
+    logMessage "LSDeluxe installed successfully." "INFO"
+
 else
-    echo "LSDeluxe is already installed."
+
+    logMessage "LSDeluxe is already installed." "DEBUG"
+
 fi
 
-# Check and install fastfetch
+# Check and install Fastfetch
 if ! command -v fastfetch &> /dev/null; then
-    echo "Installing fastfetch..."
-    sudo add-apt-repository -y ppa:zhangsongcui3371/fastfetch
-    sudo apt update
-    sudo apt install -y fastfetch
-    echo "Fastfetch installed successfully."
+
+    logMessage "Installing Fastfetch..." "INFO"
+
+    # Add repository, update and install Fastfetch
+    sudo add-apt-get-repository -y ppa:zhangsongcui3371/fastfetch
+    sudo apt-get update
+    sudo apt-get install -y fastfetch
+
+    logMessage "Fastfetch installed successfully." "INFO"
+
 else
-    echo "Fastfetch is already installed."
+
+    logMessage "Fastfetch is already installed." "DEBUG"
+
 fi
 
-# Set Zsh as the default shell if it's not already
-if [[ "$SHELL" != "$(which zsh)" ]]; then
-    echo "Setting Zsh as the default shell..."
-    chsh -s "$(which zsh)"
-    echo "Zsh is now the default shell. Please log out and log back in for changes to take effect."
+# Check and install JQuery (jq)
+if ! command -v jq &> /dev/null; then
+
+    logMessage "Installing JQuery (jq)..." "INFO"
+
+    # Install JQuery
+    sudo apt-get install -y jq
+
+    logMessage "JQuery installed successfully." "INFO"
+
 else
-    echo "Zsh is already the default shell."
+
+    logMessage "JQuery is already installed." "DEBUG"
+
 fi
 
-# jq
-# ufw
+# Set ZSH as the default shell if ZSH environment file exists
+if [[ -f "$HOME/.zshenv" ]]; then
 
-echo "All requested applications are installed and up to date!"
+    # Check that ZSH is not already default shell
+    if [[ "$SHELL" != "$(which zsh)" ]]; then
+
+        logMessage "Setting ZSH as the default shell..." "INFO"
+
+        # Set ZSH as the default shell
+        chsh -s "$(which zsh)"
+
+        logMessage "ZSH is now the default shell. Please log out and log back in for changes to take effect." "INFO"
+
+    else
+
+        logMessage "ZSH is already the default shell." "DEBUG"
+
+    fi
+
+else
+
+    logMessage "No ZSH environment file found. Skipping setting ZSH as the default shell." "WARNING"
+
+fi
+
+# Set external SSH installer script
+sshInstaller="./ssh-setup-and-config.sh"
+
+# Execute external SSH setup script
+if [[ -x "${sshInstaller}" ]]; then
+
+    logMessage "Executing SSH setup script (${sshInstaller})..." "INFO"
+
+    # Execute SSH installer
+    "${sshInstaller}"
+
+    if [[ $? -eq 0 ]]; then
+
+        logMessage "SSH setup script executed successfully." "INFO"
+
+    else
+
+        logMessage "SSH setup script failed." "ERROR"
+
+    fi
+
+else
+
+    logMessage "SSH setup script ($sshInstaller) is not executable or not found." "ERROR"
+
+fi
+
+# Clone and execute install-linux.sh from GitHub repository
+dotfilesRepo="https://github.com/norsemangrey/.dotfiles.git"
+dotfilesDirectory="$HOME/.dotfiles"
+dotfilesInstaller="${dotfilesDirectory}/install-linux.sh"
+
+# Check if the repository already exists
+if [[ ! -d "${dotfilesDirectory}" ]]; then
+
+    logMessage "Cloning the .dotfiles repository (${dotfilesRepo})..." "INFO"
+
+    # Clone dotfiles directory
+    git clone "${dotfilesRepo}" "${dotfilesDirectory}"
+
+    # Check for errors
+    if [[ $? -ne 0 ]]; then
+
+        logMessage "Failed to clone the .dotfiles repository." "ERROR"
+
+    fi
+
+    logMessage "Successfully cloned .dotfiles repository." "INFO"
+
+else
+
+    logMessage "The .dotfiles repository already exists. Attempting to update..." "DEBUG"
+
+    # Pull latest
+    git -C "${dotfilesDirectory}" pull
+
+    # Check for errors
+    if [[ $? -ne 0 ]]; then
+
+        logMessage "Failed to update the .dotfiles repository." "WARNING"
+
+    fi
+
+    logMessage "Successfully updated the .dotfiles repository." "INFO"
+
+fi
+
+# Ensure the install script is executable
+if [[ -f "${dotfilesInstaller}" ]]; then
+
+    # Set permissions on the installer script
+    chmod +x "${dotfilesInstaller}"
+
+    logMessage "Set execute permissions on installer script (${dotfilesInstaller})." "DEBUG"
+
+    logMessage "Executing .dotfiles installer script..." "INFO"
+
+    # Execute the install script
+    "${dotfilesInstaller}"
+
+    # Check for errors
+    if [[ $? -eq 0 ]]; then
+
+        logMessage "Install script executed successfully." "INFO"
+
+    else
+
+        logMessage "Install script execution failed." "ERROR"
+
+    fi
+
+else
+
+    logMessage "Install script (${dotfilesInstaller}) not found in the repository." "ERROR"
+
+fi
+
+echo "Installer script completed."

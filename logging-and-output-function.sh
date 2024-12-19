@@ -1,34 +1,28 @@
 #!/bin/bash
 
-# Determine the calling script's name and directory
-callingScript="${BASH_SOURCE[1]}"
-callingScriptName=$(basename "$callingScript" .sh)
-callingScriptDirectory=$(dirname "$(realpath "$callingScript")")
-
 # Determine the log directory (check for env called LOG_PATH else use local)
-logDirectory="${LOG_PATH:-$callingScriptDirectory}"
-
-# Ensure the log directory exists
-mkdir -p "$logDirectory"
+logDirectory="${LOG_PATH:-$(dirname "$(realpath "${BASH_SOURCE[1]}")")}"
 
 # Set the log file path
-logFile="$logDirectory/$callingScriptName.log"
+logFile="${logDirectory}/$(basename "${BASH_SOURCE[1]}" .sh).log"
 
-# Enable or disable DEBUG messages
+# Ensure the log directory exists
+mkdir -p "${logDirectory}"
+
+# Enable or disable debug messages
 debug=false
 
 # Helper function to log/write messages
 logMessage() {
 
-    local message="$1"
+    local message="${1}"
     local type="${2^^}" # Convert to uppercase (Bash 4+)
 
     # Default to INFO if no type is provided
     [ -z "$type" ] && type="INFO"
 
     # Timestamp for the log entry
-    local timestamp
-    timestamp=$(date +"%Y-%m-%d %H:%M:%S")
+    local timestamp=$(date +"%Y-%m-%d %H:%M:%S")
 
     # Set valid log levels
     local validLevels=("INFO" "WARNING" "ERROR" "DEBUG")
@@ -70,4 +64,5 @@ logMessage() {
 
     # Append to the log file
     echo "$formattedMessage" >> "$logFile"
+
 }

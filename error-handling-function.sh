@@ -16,7 +16,7 @@ handleError() {
     local callingScript="${BASH_SOURCE[1]}"
 
     # Get the error message passed from the trap
-    local errorMessage="${0}"
+    local errorMessage="${1}"
 
     # Capture the error message and remove the script name prefix
     local error=$(cat "${errorFile}" | sed "s|${callingScript}: ||g")

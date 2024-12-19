@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Get the calling script general error message
+generalErrorMessage="${1}"
+
 # Define the error file
 errorFile="/tmp/last-error.txt"
 
@@ -31,4 +34,4 @@ handleError() {
 
 # Trap errors and pass the error from the last failed command
 # Get and pass general error message from caller script or pass default
-trap 'handleError "${1-Script failed}"' ERR
+trap 'handleError "${generalErrorMessage-Script failed}"' ERR

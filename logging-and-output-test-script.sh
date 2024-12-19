@@ -4,11 +4,11 @@
 externalLogger="./logging-and-output-function.sh"
 externalErrorHandler="./error-handling-function.sh"
 
-# Source external logger and error handler
-source "${externalLogger}"
-source "${externalErrorHandler}" "Failed to set up SSH"
+# Source external logger and error handler (but allow execution without them)
+source "${externalErrorHandler}" "Test script failed" || true
+source "${externalLogger}" || true
 
-# Verify if logger function exists and sett fallback
+# Verify if logger function exists or sett fallback
 if [[ $(type -t logMessage) != function ]]; then
 
     # Fallback minimalistic logger function

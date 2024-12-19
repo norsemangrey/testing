@@ -1,118 +1,174 @@
 #!/bin/bash
 
-# Define the logger function name in a variable
+# Set external logger- and error handling script paths
 externalLogger="./logging-and-output-function.sh"
 externalErrorHandler="./error-handling-function.sh"
 
-# Check if external logger file, and source it if it does
-if [[ -f "${externalLogger}" ]]; then
-    source "${externalLogger}"
-else
+# Source external logger and error handler (but allow execution without them)
+source "${externalErrorHandler}" "Failed to set up SSH" || true
+source "${externalLogger}" || true
+
+# Verify if logger function exists or sett fallback
+if [[ $(type -t logMessage) != function ]]; then
+
     # Fallback minimalistic logger function
     logMessage() {
-        local level="${2:-INFO}"
-        echo "[$level] $1"
-    }
-fi
 
-# Source external error handling function (provide general error message)
-source "${externalErrorHandler}" "Failed to set up SSH"
+        local level="${2:-INFO}"
+        echo "[${level}] $1"
+
+    }
+
+fi
 
 
 # Get the username from the $USER environment variable
-USERNAME="$USER"
+username="${USER}"
+
+# Get the IP address of the server
+serverIp=$(hostname -I | awk '{print $1}')
+
 
 # If the username is "root", ask for confirmation before continuing
-if [ "$USERNAME" == "root" ]; then
+if [ "${username}" == "root" ]; then
+
+    # Prompt user for confirmation to continue
     read -p "You are logged in as root. Are you sure you want to continue? (y/n): " confirmation
-    if [[ ! "$confirmation" =~ ^[Yy]$ ]]; then
+
+    # If not "Yes" the abort script
+    if [[ ! "${confirmation}" =~ ^[Yy]$ ]]; then
+
         logMessage "Aborted by user. Exiting setup..." "INFO"
+
         exit 1
+
     fi
+
 fi
 
 # Check if OpenSSH server is installed
 if dpkg -l | grep -q openssh-server; then
+
     logMessage "OpenSSH server is already installed." "DEBUG"
+
 else
+
     logMessage "Installing OpenSSH server..." "INFO"
-    sudo apt update && sudo apt install -y openssh-server
+
+    # Update and install OpenSSH server
+    sudo apt-get update && sudo apt-get install -y openssh-server
+
 fi
 
 # Check if SSH service is already running
 if ! systemctl is-active --quiet ssh; then
+
     logMessage "Starting and enabling SSH service..." "INFO"
+
+    # Start and enable the SSH service
     sudo systemctl start ssh
     sudo systemctl enable ssh
+
 else
+
     logMessage "SSH service is already running." "DEBUG"
+
 fi
 
-# Install OpenSSH server if not already installed
-echo "Installing OpenSSH server..."
-sudo apt-get update
-sudo apt-get install -y openssh-server
+# Check if UFW is installed and SSH rule exists
+if command -v ufw >/dev/null; then
 
-# Check if UFW is active and configure firewall
-if sudo ufw status | grep -q "active"; then
-    echo "Configuring firewall to allow SSH..."
-    sudo ufw allow ssh
-    sudo ufw reload
+    logMessage "Checking firewall rules..." "DEBUG"
+
+    # Check if SSH firewall rule is already configured
+    if sudo ufw show added | grep -q ' 22/tcp'; then
+
+        logMessage "Firewall rule for SSH already exists." "DEBUG"
+
+    else
+
+        logMessage "Configuring firewall to allow SSH..." "INFO"
+
+        # Set allow rule for SSH on port 22 and reload UFW
+        sudo ufw allow 22/tcp comment 'SSH'
+        sudo ufw reload
+
+    fi
+
 else
-    echo "UFW is not active. Skipping firewall configuration."
+
+    echo "UFW is not installed. Skipping firewall configuration." "WARNING"
+
 fi
 
-# Get the IP address of the server
-SERVER_IP=$(hostname -I | awk '{print $1}')
+logMessage "Setting up SSH key-based authentication for '${username}'..." "INFO"
 
-# Create .ssh directory if it doesn't exist and set correct permissions
-echo "Setting up SSH key-based authentication for '$USERNAME'..."
-sudo mkdir -p /home/"$USERNAME"/.ssh
-sudo chmod 700 /home/"$USERNAME"/.ssh
+# Create SSH directory if it doesn't exist and set correct permissions
+sudo mkdir -p /home/"${username}"/.ssh
+sudo chmod 700 /home/"${username}"/.ssh
 
 # Create authorized_keys file if it doesn't exist
-if [ ! -f /home/"$USERNAME"/.ssh/authorized_keys ]; then
-    echo "Creating the authorized_keys file..."
-    sudo touch /home/"$USERNAME"/.ssh/authorized_keys
-    sudo chmod 600 /home/"$USERNAME"/.ssh/authorized_keys
+if [ ! -f /home/"${username}"/.ssh/authorized_keys ]; then
+
+    echo "Creating the authorized keys file..." "INFO"
+
+    # Create file and set correct permissions
+    sudo touch /home/"${username}"/.ssh/authorized_keys
+    sudo chmod 600 /home/"${username}"/.ssh/authorized_keys
+
 fi
 
 # Loop to check and prompt for the public key until it is found in the authorized_keys file
 while true; do
-    echo "Please use the 'ssh-copy-id' command from your client machine to copy your public key to this server."
-    echo "Example: ssh-copy-id $USERNAME@$SERVER_IP"
-    echo "Once you've done that, press Enter to continue."
-    read -p "Press Enter after copying the public key..."
 
-    if sudo grep -q "^ssh-" /home/"$USERNAME"/.ssh/authorized_keys; then
-        echo "Public key successfully added."
+    # Prompt user to copy the public key from the client computer
+    echo "Please use the 'ssh-copy-id' command from your client machine to copy your public key to this server."
+    echo "Example: ssh-copy-id ${username}@${serverIp}"
+    read -p "Press 'Enter' after copying the public key to continue..."
+
+    # Check if the authorized keys file contains an entry (we assume that it is empty when running this script)
+    if sudo grep -q "^ssh-" /home/"$username"/.ssh/authorized_keys; then
+
+        logMessage "Client public key successfully added." "INFO"
+
         break
+
     else
-        echo "Error: Public key not found in the authorized_keys file."
+
+        logMessage "Public key not found in the authorized keys file." "WARNING"
+
+        # Prompt user for retry
         echo "Please ensure that the public key has been copied correctly."
-        read -p "Press Enter to retry..."
+        read -p "Press 'Enter' to retry..."
+
     fi
+
 done
 
-# Set correct permissions for the authorized_keys file
-sudo chown -R "$USERNAME":"$USERNAME" /home/"$USERNAME"/.ssh
-sudo chmod 700 /home/"$USERNAME"/.ssh
-sudo chmod 600 /home/"$USERNAME"/.ssh/authorized_keys
+# Set correct permissions for the authorized keys file
+sudo chown -R "${username}":"${username}" /home/"${username}"/.ssh
+sudo chmod 700 /home/"${username}"/.ssh
+sudo chmod 600 /home/"${username}"/.ssh/authorized_keys
 
-# Backup and modify SSH configuration to disable root login and password authentication
-echo "Backing up and configuring SSH to disable root login and password authentication..."
+logMessage "Backing up existing SSH config and configuring to disable root login and password authentication..."
+
+# Backup existing SSH configuration
 sudo cp /etc/ssh/sshd_config /etc/ssh/sshd_config.bak
+
+# Modify config to disable root login and password authentication
 sudo sed -i 's/^#PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config
 sudo sed -i 's/^#PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config
 sudo sed -i 's/^#ChallengeResponseAuthentication.*/ChallengeResponseAuthentication no/' /etc/ssh/sshd_config
 sudo sed -i 's/^#UsePAM.*/UsePAM no/' /etc/ssh/sshd_config
 
+logMessage "Restarting SSH service..." "DEBUG"
+
 # Restart SSH service to apply changes
-echo "Restarting SSH service..."
 sudo systemctl restart ssh
 
 # Print success message
-echo "SSH key-based authentication is now set up for user '$USERNAME'."
+logMessage "SSH successfully enabled and key-based authentication configured for user '${username}'." "INFO"
+
 echo "You can now log in using the private key corresponding to the provided public key."
 
 exit 0

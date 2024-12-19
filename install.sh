@@ -52,4 +52,7 @@ else
     echo "Zsh is already the default shell."
 fi
 
+# jq
+# ufw
+
 echo "All requested applications are installed and up to date!"

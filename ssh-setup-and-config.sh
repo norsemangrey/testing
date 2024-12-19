@@ -28,7 +28,6 @@ username="${USER}"
 # Get the IP address of the server
 serverIp=$(hostname -I | awk '{print $1}')
 
-
 # If the username is "root", ask for confirmation before continuing
 if [ "${username}" == "root" ]; then
 
@@ -104,8 +103,13 @@ fi
 logMessage "Setting up SSH key-based authentication for '${username}'..." "INFO"
 
 # Create SSH directory if it doesn't exist and set correct permissions
-sudo mkdir -p /home/"${username}"/.ssh
-sudo chmod 700 /home/"${username}"/.ssh
+if [ ! -d "/home/${username}/.ssh" ]; then
+
+    # Create directory and set correct permissions
+    sudo mkdir -p /home/"${username}"/.ssh
+    sudo chmod 700 /home/"${username}"/.ssh
+
+fi
 
 # Create authorized_keys file if it doesn't exist
 if [ ! -f /home/"${username}"/.ssh/authorized_keys ]; then
@@ -118,6 +122,9 @@ if [ ! -f /home/"${username}"/.ssh/authorized_keys ]; then
 
 fi
 
+# Track the initial line count of the authorized_keys file
+initialKeyCount=$(wc -l < /home/"${username}"/.ssh/authorized_keys 2>/dev/null || echo 0)
+
 # Loop to check and prompt for the public key until it is found in the authorized_keys file
 while true; do
 
@@ -126,8 +133,11 @@ while true; do
     echo "Example: ssh-copy-id ${username}@${serverIp}"
     read -p "Press 'Enter' after copying the public key to continue..."
 
-    # Check if the authorized keys file contains an entry (we assume that it is empty when running this script)
-    if sudo grep -q "^ssh-" /home/"$username"/.ssh/authorized_keys; then
+    # Get the current line count
+    currentKeyCount=$(wc -l < /home/"${username}"/.ssh/authorized_keys 2>/dev/null || echo 0)
+
+    # Check for new line and validate new key
+    if [ "${currentKeyCount}" -gt "${initialKeyCount}" ] && tail -n 1 /home/"${username}"/.ssh/authorized_keys | grep -q "^ssh-"; then
 
         logMessage "Client public key successfully added." "INFO"
 
@@ -145,26 +155,52 @@ while true; do
 
 done
 
-# Set correct permissions for the authorized keys file
-sudo chown -R "${username}":"${username}" /home/"${username}"/.ssh
-sudo chmod 700 /home/"${username}"/.ssh
-sudo chmod 600 /home/"${username}"/.ssh/authorized_keys
-
 logMessage "Backing up existing SSH config and configuring to disable root login and password authentication..."
 
 # Backup existing SSH configuration
-sudo cp /etc/ssh/sshd_config /etc/ssh/sshd_config.bak
+timestamp=$(date +"%Y-%m-%d_%H-%M-%S")
+sshConfigBackup="/etc/ssh/sshd_config.bak.${timestamp}"
+sudo cp /etc/ssh/sshd_config "${sshConfigBackup}"
+
+# Check and update SSH configuration values only if necessary
+sshConfigUpdate() {
+
+    local setting="${1}"
+    local value="${2}"
+
+    if ! sudo grep -q "^${setting} ${value}" /etc/ssh/sshd_config; then
+
+        sudo sed -i "s/^#${setting}.*/${setting} ${value}/" /etc/ssh/sshd_config
+        sudo sed -i "/^${setting} /!a ${setting} ${value}" /etc/ssh/sshd_config
+
+        configUpdated=true
+
+    fi
+
+}
 
 # Modify config to disable root login and password authentication
-sudo sed -i 's/^#PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config
-sudo sed -i 's/^#PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config
-sudo sed -i 's/^#ChallengeResponseAuthentication.*/ChallengeResponseAuthentication no/' /etc/ssh/sshd_config
-sudo sed -i 's/^#UsePAM.*/UsePAM no/' /etc/ssh/sshd_config
+sshConfigUpdate "PermitRootLogin" "no"
+sshConfigUpdate "PasswordAuthentication" "no"
+sshConfigUpdate "ChallengeResponseAuthentication" "no"
+sshConfigUpdate "UsePAM" "no"
 
-logMessage "Restarting SSH service..." "DEBUG"
+# If config was updated, restart SSH and keep the backup
+if [ "${configUpdated}" = true ]; then
 
-# Restart SSH service to apply changes
-sudo systemctl restart ssh
+    logMessage "SSH configuration updated. Restarting SSH service..." "INFO"
+
+    # Restart SSH service to apply changes
+    sudo systemctl restart ssh
+
+else
+
+    logMessage "No changes made to the SSH configuration." "INFO"
+
+    # Remove the backup file if no changes were made
+    sudo rm "${sshConfigBackup}"
+
+fi
 
 # Print success message
 logMessage "SSH successfully enabled and key-based authentication configured for user '${username}'." "INFO"

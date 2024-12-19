@@ -14,6 +14,9 @@ exec 2>"${errorFile}"
 # Function to handle error from trap
 handleError() {
 
+    echo "${callingScriptName}"
+    echo $(basename "$0")
+
     # Capture the error message and remove the script name prefix
     error=$(cat "${errorFile}" | sed "s|^\./${callingScriptName}: ||")
 

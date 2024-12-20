@@ -55,7 +55,7 @@ logMessage() {
     esac
 
     # Skip debug messages if debug is disabled
-    if [ "$type" = "DEBUG" ] && ! $DEBUG; then
+    if [ "$type" = "DEBUG" ] && ! $debug; then
         return
     fi
 

@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Set external logger- and error handling script paths
-externalLogger="./logging-and-output-function.sh"
-externalErrorHandler="./error-handling-function.sh"
+externalLogger="./utils/logging-and-output-function.sh"
+externalErrorHandler="./utils/error-handling-function.sh"
 
 # Source external logger and error handler (but allow execution without them)
 source "${externalErrorHandler}" "Failed to set up SSH" || true

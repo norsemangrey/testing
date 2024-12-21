@@ -23,18 +23,16 @@ fi
 
 unset debug
 
-# Redirect output functions
+# Redirect output functions if not debug enabled
 execCommand() {
 
     if $debug; then
-
-        logMessage "Debug enabled" "DEBUG"
 
         "$@"
 
     else
 
-        "$@" &>/dev/null
+        "$@" > /dev/null
 
     fi
 

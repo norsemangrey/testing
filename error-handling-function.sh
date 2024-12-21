@@ -7,7 +7,7 @@ generalErrorMessage="${1}"
 errorFile="/tmp/last-error.txt"
 
 # Redirect all stderr to the error file
-#exec 2>"${errorFile}"
+exec 2>"${errorFile}"
 
 # Function to handle error from trap
 handleError() {
@@ -34,4 +34,4 @@ handleError() {
 
 # Trap errors and pass the error from the last failed command
 # Get and pass general error message from caller script or pass default
-trap 'exec 2> >(tee "${errorFile}" >&2); handleError "${generalErrorMessage-Script failed}"' ERR
+trap 'handleError "${generalErrorMessage-Script failed}"' ERR

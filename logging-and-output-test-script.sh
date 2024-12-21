@@ -22,7 +22,9 @@ if [[ $(type -t logMessage) != function ]]; then
 fi
 
 # Enable DEBUG messages if needed
-debug=true
+debug=
+
+read -p "This is an input test. Hit 'Enter' to continue..." 2>&1
 
 # Example log messages
 logMessage "This is an informational message." "INFO"

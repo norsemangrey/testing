@@ -21,6 +21,8 @@ if [[ $(type -t logMessage) != function ]]; then
 
 fi
 
+unset debug
+
 # Redirect output functions
 execCommand() {
 
@@ -41,7 +43,7 @@ execCommand() {
 # Ensure the system is up-to-date
 logMessage "Updating and upgrading the system..." "INFO"
 
-execCommand sudo apt-get update -y && sudo apt-get upgrade -y
+sudo apt-get update -y > /dev/null && sudo apt-get upgrade -y > /dev/null
 
 logMessage "System update and upgrade completed." "INFO"
 

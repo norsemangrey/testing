@@ -131,7 +131,7 @@ while true; do
     # Prompt user to copy the public key from the client computer
     echo "Please use the 'ssh-copy-id' command from your client machine to copy your public key to this server."
     echo "Example: ssh-copy-id ${username}@${serverIp}"
-    read -p "Press Enter after copying the public key to continue..." < /dev/tty
+    read -p "Press Enter after copying the public key to continue..." 2>&1
 
     # Get the current line count
     currentKeyCount=$(wc -l < /home/"${username}"/.ssh/authorized_keys 2>/dev/null || echo 0)
@@ -149,7 +149,7 @@ while true; do
 
         # Prompt user for retry
         echo "Please ensure that the public key has been copied correctly."
-        read -p "Press 'Enter' to retry..." < /dev/tty
+        read -p "Press 'Enter' to retry..." 2>&1
 
     fi
 

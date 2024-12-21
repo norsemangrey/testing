@@ -27,11 +27,11 @@ unset debug
 execCommand() {
 
     if $debug; then
-
+        echo "DEBUG ENABLED"
         "$@"
 
     else
-
+        echo "DEBUG DISABLED"
         "$@" > /dev/null
 
     fi

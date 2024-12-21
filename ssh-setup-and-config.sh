@@ -125,35 +125,48 @@ fi
 # Track the initial line count of the authorized_keys file
 initialKeyCount=$(wc -l < /home/"${username}"/.ssh/authorized_keys 2>/dev/null || echo 0)
 
-# Loop to check and prompt for the public key until it is found in the authorized_keys file
-while true; do
 
-    # Prompt user to copy the public key from the client computer
-    echo "Please use the 'ssh-copy-id' command from your client machine to copy your public key to this server."
-    echo "Example: ssh-copy-id ${username}@${serverIp}"
-    read -p "Press Enter after copying the public key to continue..." 2>&1
+if [ $initialKeyCount -gt 0 ]; then
 
-    # Get the current line count
-    currentKeyCount=$(wc -l < /home/"${username}"/.ssh/authorized_keys 2>/dev/null || echo 0)
+    echo "Authorized keys file already contains one or more entires. Do you want to add a new client or continue?" "INFO"
+    echo "WARNING: Continuing the script will disable SSH password login, make sure the existing client public key is correct."
+    read -p "Press 'Enter' to add a new client key or 'C' to continue: " 2>&1 reply
 
-    # Check for new line and validate new key
-    if [ "${currentKeyCount}" -gt "${initialKeyCount}" ] && tail -n 1 /home/"${username}"/.ssh/authorized_keys | grep -q "^ssh-"; then
+    # If "Cc" exit the loop and continue the script
+    if [[ "${reply}" =~ ^[Cc]$ ]]; then
 
-        logMessage "Client public key successfully added." "INFO"
-
-        break
+        logMessage "Continuing with existing client entires." "DEBUG"
 
     else
 
-        logMessage "Public key not found in the authorized keys file." "WARNING"
+        # Loop to check and prompt for the public key until it is found in the authorized_keys file
+        while true; do
 
-        # Prompt user for retry
-        echo "Please ensure that the public key has been copied correctly."
-        read -p "Press 'Enter' to retry..." 2>&1
+            # Prompt user to copy the public key from the client computer
+            echo "Please use the 'ssh-copy-id' command on your client machine to copy client public key to this server (example: 'ssh-copy-id ${username}@${serverIp}')."
+            read -p "Press 'Enter' after copying the public key to continue..." 2>&1
+
+            # Get the current line count
+            currentKeyCount=$(wc -l < /home/"${username}"/.ssh/authorized_keys 2>/dev/null || echo 0)
+
+            # Check for new line and validate new key
+            if [ "${currentKeyCount}" -gt "${initialKeyCount}" ] && tail -n 1 /home/"${username}"/.ssh/authorized_keys | grep -q "^ssh-"; then
+
+                logMessage "Client public key successfully added." "INFO"
+
+                break
+
+            else
+
+                logMessage "Public key not found in the authorized keys file." "WARNING"
+
+            fi
+
+        done
 
     fi
 
-done
+fi
 
 logMessage "Backing up existing SSH config and configuring to disable root login and password authentication..."
 

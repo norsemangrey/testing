@@ -171,8 +171,6 @@ if [ $initialKeyCount -gt 0 ]; then
 
     else
 
-        logMessage "Waiting for new client public key..." "INFO"
-
         # Set flag
         copyKey=true
 
@@ -186,7 +184,9 @@ else
 fi
 
 # Loop to check and prompt for the public key until it is found in the authorized_keys file
-while copyKey; do
+while [[ "$copyKey" == true ]]; do
+
+    logMessage "Waiting for new client public key..." "INFO"
 
     # Prompt user to copy the public key from the client computer
     echo "Please use the 'ssh-copy-id' command on your client machine to copy client public key to this server (example: 'ssh-copy-id ${username}@${serverIp}')."

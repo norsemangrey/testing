@@ -1,5 +1,37 @@
 #!/bin/bash
 
+# Usage function.
+usage() {
+    echo ""
+    echo "Usage: $0 [OPTIONS]"
+    echo ""
+    echo "Options:"
+    echo "  -d, --debug             Turns on console output."
+    echo "  -h, --help              Show this help message and exit."
+    echo ""
+    echo "TODO: Create usage information"
+    echo ""
+}
+
+# Parsed from command line arguments.
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -d|--debug)
+            debug=true
+            shift
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            echo "Invalid option: $1" >&2
+            usage
+            exit 1
+            ;;
+    esac
+done
+
 # Set external logger- and error handling script paths
 externalLogger="./utils/logging-and-output-function.sh"
 externalErrorHandler="./utils/error-handling-function.sh"
@@ -20,7 +52,6 @@ if [[ $(type -t logMessage) != function ]]; then
     }
 
 fi
-
 
 # Get the username from the $USER environment variable
 username="${USER}"

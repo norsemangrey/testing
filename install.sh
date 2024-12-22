@@ -1,5 +1,37 @@
 #!/bin/bash
 
+# Usage function.
+usage() {
+    echo ""
+    echo "Usage: $0 [OPTIONS]"
+    echo ""
+    echo "Options:"
+    echo "  -d, --debug             Turns on console output."
+    echo "  -h, --help              Show this help message and exit."
+    echo ""
+    echo "TODO: Create usage information"
+    echo ""
+}
+
+# Parsed from command line arguments.
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -d|--debug)
+            debug=true
+            shift
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            echo "Invalid option: $1" >&2
+            usage
+            exit 1
+            ;;
+    esac
+done
+
 # Set external logger- and error handling script paths
 externalLogger="./utils/logging-and-output-function.sh"
 externalErrorHandler="./utils/error-handling-function.sh"
@@ -21,17 +53,15 @@ if [[ $(type -t logMessage) != function ]]; then
 
 fi
 
-unset debug
-
 # Redirect output functions if not debug enabled
 execCommand() {
 
     if $debug; then
-        echo "DEBUG ENABLED"
+
         "$@"
 
     else
-        echo "DEBUG DISABLED"
+
         "$@" > /dev/null
 
     fi
@@ -187,7 +217,7 @@ if [[ -f "${sshInstaller}" ]]; then
     logMessage "Executing SSH setup script (${sshInstaller})..." "INFO"
 
     # Execute SSH installer
-    "${sshInstaller}"
+    "${sshInstaller} ${debug:+-d}"
 
     # Check for errors
     if [[ $? -eq 0 ]]; then

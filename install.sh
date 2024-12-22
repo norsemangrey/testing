@@ -94,7 +94,7 @@ else
 
     logMessage "Oh-My-Posh is already installed." "DEBUG"
 
-    sudo oh-my-posh upgrade
+    execCommand sudo oh-my-posh upgrade
 
 fi
 

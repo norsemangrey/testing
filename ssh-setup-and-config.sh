@@ -125,11 +125,12 @@ fi
 # Track the initial line count of the authorized_keys file
 initialKeyCount=$(wc -l < /home/"${username}"/.ssh/authorized_keys 2>/dev/null || echo 0)
 
-
+# Check if key file contains any pre-existing client entries
 if [ $initialKeyCount -gt 0 ]; then
 
-    echo "Authorized keys file already contains one or more entires. Do you want to add a new client or continue?" "INFO"
-    echo "WARNING: Continuing the script will disable SSH password login, make sure the existing client public key is correct."
+    # Prompt user to add new key or continue
+    echo "Authorized keys file already contains one or more entires. Do you want to add a new client or continue?"
+    echo -e "\e[33mWARNING: Continuing the script will disable SSH password login, make sure the existing client public key is correct."
     read -p "Press 'Enter' to add a new client key or 'C' to continue: " 2>&1 reply
 
     # If "Cc" exit the loop and continue the script
@@ -168,7 +169,7 @@ if [ $initialKeyCount -gt 0 ]; then
 
 fi
 
-logMessage "Backing up existing SSH config and configuring to disable root login and password authentication..."
+logMessage "Backing up existing SSH configuration and disabling root login and password authentication..."
 
 # Backup existing SSH configuration
 timestamp=$(date +"%Y-%m-%d_%H-%M-%S")
@@ -208,7 +209,7 @@ if [ "${configUpdated}" = true ]; then
 
 else
 
-    logMessage "No changes made to the SSH configuration." "INFO"
+    logMessage "No changes made to the SSH configuration. Removing configuration backup..." "INFO"
 
     # Remove the backup file if no changes were made
     sudo rm "${sshConfigBackup}"
@@ -218,6 +219,6 @@ fi
 # Print success message
 logMessage "SSH successfully enabled and key-based authentication configured for user '${username}'." "INFO"
 
-echo "You can now log in using the private key corresponding to the provided public key."
+echo "You can now log in using the private key corresponding to the provided or existing public key."
 
 exit 0

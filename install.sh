@@ -292,6 +292,8 @@ if [[ -f "$HOME/.zshenv" ]]; then
         # Set ZSH as the default shell
         chsh -s "$(which zsh)"
 
+        zsh
+
         logMessage "ZSH is now the default shell. Please log out and log back in for changes to take effect." "INFO"
 
     else

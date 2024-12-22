@@ -171,34 +171,44 @@ if [ $initialKeyCount -gt 0 ]; then
 
     else
 
-        # Loop to check and prompt for the public key until it is found in the authorized_keys file
-        while true; do
+        logMessage "Waiting for new client public key..." "INFO"
 
-            # Prompt user to copy the public key from the client computer
-            echo "Please use the 'ssh-copy-id' command on your client machine to copy client public key to this server (example: 'ssh-copy-id ${username}@${serverIp}')."
-            read -p "Press 'Enter' after copying the public key to continue..." 2>&1
-
-            # Get the current line count
-            currentKeyCount=$(wc -l < /home/"${username}"/.ssh/authorized_keys 2>/dev/null || echo 0)
-
-            # Check for new line and validate new key
-            if [ "${currentKeyCount}" -gt "${initialKeyCount}" ] && tail -n 1 /home/"${username}"/.ssh/authorized_keys | grep -q "^ssh-"; then
-
-                logMessage "Client public key successfully added." "INFO"
-
-                break
-
-            else
-
-                logMessage "Public key not found in the authorized keys file." "WARNING"
-
-            fi
-
-        done
+        # Set flag
+        copyKey=true
 
     fi
 
+else
+
+    # Set flag
+    copyKey=true
+
 fi
+
+# Loop to check and prompt for the public key until it is found in the authorized_keys file
+while copyKey; do
+
+    # Prompt user to copy the public key from the client computer
+    echo "Please use the 'ssh-copy-id' command on your client machine to copy client public key to this server (example: 'ssh-copy-id ${username}@${serverIp}')."
+    read -p "Press 'Enter' after copying the public key to continue..." 2>&1
+
+    # Get the current line count
+    currentKeyCount=$(wc -l < /home/"${username}"/.ssh/authorized_keys 2>/dev/null || echo 0)
+
+    # Check for new line and validate new key
+    if [ "${currentKeyCount}" -gt "${initialKeyCount}" ] && tail -n 1 /home/"${username}"/.ssh/authorized_keys | grep -q "^ssh-"; then
+
+        logMessage "Client public key successfully added." "INFO"
+
+        break
+
+    else
+
+        logMessage "Public key not found in the authorized keys file." "WARNING"
+
+    fi
+
+done
 
 logMessage "Backing up existing SSH configuration and disabling root login and password authentication..."
 

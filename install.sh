@@ -178,31 +178,6 @@ else
 
 fi
 
-# Set ZSH as the default shell if ZSH environment file exists
-if [[ -f "$HOME/.zshenv" ]]; then
-
-    # Check that ZSH is not already default shell
-    if [[ "$SHELL" != "$(which zsh)" ]]; then
-
-        logMessage "Setting ZSH as the default shell..." "INFO"
-
-        # Set ZSH as the default shell
-        chsh -s "$(which zsh)"
-
-        logMessage "ZSH is now the default shell. Please log out and log back in for changes to take effect." "INFO"
-
-    else
-
-        logMessage "ZSH is already the default shell." "DEBUG"
-
-    fi
-
-else
-
-    logMessage "No ZSH environment file found. Skipping setting ZSH as the default shell." "WARNING"
-
-fi
-
 # Set external SSH installer script
 sshInstaller="./ssh-setup-and-config.sh"
 
@@ -217,7 +192,7 @@ if [[ -f "${sshInstaller}" ]]; then
     logMessage "Executing SSH setup script (${sshInstaller})..." "INFO"
 
     # Execute SSH installer
-    "${sshInstaller} ${debug:+-d}"
+    "${sshInstaller}" ${debug:+-d}
 
     # Check for errors
     if [[ $? -eq 0 ]]; then
@@ -303,6 +278,31 @@ if [[ -f "${dotfilesInstaller}" ]]; then
 else
 
     logMessage "Install script (${dotfilesInstaller}) not found in the repository." "ERROR"
+
+fi
+
+# Set ZSH as the default shell if ZSH environment file exists
+if [[ -f "$HOME/.zshenv" ]]; then
+
+    # Check that ZSH is not already default shell
+    if [[ "$SHELL" != "$(which zsh)" ]]; then
+
+        logMessage "Setting ZSH as the default shell..." "INFO"
+
+        # Set ZSH as the default shell
+        chsh -s "$(which zsh)"
+
+        logMessage "ZSH is now the default shell. Please log out and log back in for changes to take effect." "INFO"
+
+    else
+
+        logMessage "ZSH is already the default shell." "DEBUG"
+
+    fi
+
+else
+
+    logMessage "No ZSH environment file found. Skipping setting ZSH as the default shell." "WARNING"
 
 fi
 

@@ -150,7 +150,7 @@ if ! command -v fastfetch &> /dev/null; then
     logMessage "Installing Fastfetch..." "INFO"
 
     # Add repository, update and install Fastfetch
-    sudo add-apt-get-repository -y ppa:zhangsongcui3371/fastfetch
+    sudo add-apt-repository -y ppa:zhangsongcui3371/fastfetch
     sudo apt-get update
     sudo apt-get install -y fastfetch
 

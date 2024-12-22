@@ -81,7 +81,7 @@ if ! command -v ufw &> /dev/null; then
     logMessage "Installing UFW..." "INFO"
 
     # Install JQuery
-    sudo apt-get install -y ufw
+    execCommand sudo apt-get install -y ufw
 
     logMessage "UFW installed successfully." "INFO"
 
@@ -97,7 +97,7 @@ if ! command -v zsh &> /dev/null; then
     logMessage "Installing ZSH..." "INFO"
 
     # Installing ZSH
-    sudo apt-get install -y zsh
+    execCommand sudo apt-get install -y zsh
 
     logMessage "ZSH installed successfully." "INFO"
 
@@ -134,7 +134,7 @@ if ! command -v lsd &> /dev/null; then
     logMessage "Installing LSDeluxe (lsd)..." "INFO"
 
     # Install LSDelux
-    sudo apt-get install -y lsd
+    execCommand sudo apt-get install -y lsd
 
     logMessage "LSDeluxe installed successfully." "INFO"
 
@@ -150,9 +150,9 @@ if ! command -v fastfetch &> /dev/null; then
     logMessage "Installing Fastfetch..." "INFO"
 
     # Add repository, update and install Fastfetch
-    sudo add-apt-repository -y ppa:zhangsongcui3371/fastfetch
-    sudo apt-get update
-    sudo apt-get install -y fastfetch
+    execCommand sudo add-apt-repository -y ppa:zhangsongcui3371/fastfetch
+    execCommand sudo apt-get update
+    execCommand sudo apt-get install -y fastfetch
 
     logMessage "Fastfetch installed successfully." "INFO"
 
@@ -168,7 +168,7 @@ if ! command -v jq &> /dev/null; then
     logMessage "Installing JQuery (jq)..." "INFO"
 
     # Install JQuery
-    sudo apt-get install -y jq
+    execCommand sudo apt-get install -y jq
 
     logMessage "JQuery installed successfully." "INFO"
 

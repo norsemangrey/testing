@@ -290,7 +290,7 @@ if [[ -f "$HOME/.zshenv" ]]; then
         logMessage "Setting ZSH as the default shell..." "INFO"
 
         # Set ZSH as the default shell
-        chsh -s "$(which zsh)"
+        chsh -s "$(which zsh)" 2>&1
 
         zsh
 

@@ -9,7 +9,7 @@ usage() {
     echo "  -d, --debug             Turns on console output."
     echo "  -h, --help              Show this help message and exit."
     echo ""
-    echo "TODO: Create usage information"
+    echo "TODO: Create usage information."
     echo ""
 }
 

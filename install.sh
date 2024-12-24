@@ -33,8 +33,8 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Set external logger- and error handling script paths
-externalLogger="./utils/logging-and-output-function.sh"
-externalErrorHandler="./utils/error-handling-function.sh"
+externalLogger=$(dirname "${BASH_SOURCE[0]}")"/utils/logging-and-output-function.sh"
+externalErrorHandler=$(dirname "${BASH_SOURCE[0]}")"/utils/error-handling-function.sh"
 
 # Source external logger and error handler (but allow execution without them)
 source "${externalErrorHandler}" "Linux setup script failed" || true

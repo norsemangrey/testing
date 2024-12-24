@@ -221,8 +221,8 @@ if [[ ! -d "${dotfilesDirectory}" ]]; then
 
     logMessage "Cloning the .dotfiles repository (${dotfilesRepo})..." "INFO"
 
-    # Clone dotfiles directory
-    execCommand git clone "${dotfilesRepo}" "${dotfilesDirectory}"
+    # Clone dotfiles directory along with all submodules
+    execCommand git clone --recurse-submodules "${dotfilesRepo}" "${dotfilesDirectory}"
 
     # Check for errors
     if [[ $? -ne 0 ]]; then
@@ -240,6 +240,9 @@ else
     # Pull latest
     execCommand git -C "${dotfilesDirectory}" pull
 
+    # Update submodules to their correct versions
+    execCommand submodules update --init --recursive
+
     # Check for errors
     if [[ $? -ne 0 ]]; then
 
@@ -250,6 +253,21 @@ else
     logMessage "Successfully updated the .dotfiles repository." "INFO"
 
 fi
+
+
+# Clone or update the repository
+if [ ! -d "$CLONE_DIR" ]; then
+    echo "Cloning repository..."
+    git clone --recurse-submodules "$REPO_URL" "$CLONE_DIR"
+else
+    echo "Repository already exists. Pulling latest changes..."
+    cd "$CLONE_DIR"
+    git pull
+    echo "Updating submodules..."
+    git submodule update --init --recursive
+fi
+
+
 
 # Ensure the install script is executable
 if [[ -f "${dotfilesInstaller}" ]]; then

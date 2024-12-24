@@ -241,7 +241,7 @@ else
     execCommand git -C "${dotfilesDirectory}" pull
 
     # Update submodules to their correct versions
-    execCommand submodules update --init --recursive
+    execCommand git submodules update --init --recursive
 
     # Check for errors
     if [[ $? -ne 0 ]]; then

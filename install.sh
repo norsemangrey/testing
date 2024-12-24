@@ -37,7 +37,7 @@ externalLogger="./utils/logging-and-output-function.sh"
 externalErrorHandler="./utils/error-handling-function.sh"
 
 # Source external logger and error handler (but allow execution without them)
-source "${externalErrorHandler}" "Test script failed" || true
+source "${externalErrorHandler}" "Linux setup script failed" || true
 source "${externalLogger}" || true
 
 # Verify if logger function exists or sett fallback
@@ -241,7 +241,7 @@ else
     execCommand git -C "${dotfilesDirectory}" pull
 
     # Update submodules to their correct versions
-    execCommand git submodules update --init --recursive
+    execCommand git submodule update --init --recursive
 
     # Check for errors
     if [[ $? -ne 0 ]]; then

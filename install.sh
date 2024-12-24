@@ -179,7 +179,7 @@ else
 fi
 
 # Set external SSH installer script
-sshInstaller="./ssh-setup-and-config.sh"
+sshInstaller=$(dirname "${BASH_SOURCE[0]}")"/ssh-setup-and-config.sh"
 
 # Execute external SSH setup script
 if [[ -f "${sshInstaller}" ]]; then

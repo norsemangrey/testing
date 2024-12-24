@@ -255,20 +255,6 @@ else
 fi
 
 
-# Clone or update the repository
-if [ ! -d "$CLONE_DIR" ]; then
-    echo "Cloning repository..."
-    git clone --recurse-submodules "$REPO_URL" "$CLONE_DIR"
-else
-    echo "Repository already exists. Pulling latest changes..."
-    cd "$CLONE_DIR"
-    git pull
-    echo "Updating submodules..."
-    git submodule update --init --recursive
-fi
-
-
-
 # Ensure the install script is executable
 if [[ -f "${dotfilesInstaller}" ]]; then
 
